@@ -189,8 +189,14 @@ def construir_html():
                  + (f' &middot; ultima visita: {str(v.fecha)[:10]} '
                     f'(cuadrilla {v.cuadrilla})' if v else '') + '</div>')
 
-        # tabla de estado de la ultima visita
-        if v is not None:
+        if v is None:
+            # equipo registrado pero sin visitas todavia
+            H.append('<div class="sub" style="background:#fff3cd;color:#664d03;'
+                     'padding:10px 14px;border-radius:6px;">&#8505;&#65039; '
+                     'Sin visitas registradas todavia. Agrega filas en la hoja '
+                     f'<b>{e.codigo}</b> del Excel para ver su estado y graficos.</div>')
+        else:
+            # tabla de estado de la ultima visita
             H.append('<table>')
             for columna, parametro, unidad in agente.COLUMNAS:
                 m = v.medicion(parametro)
@@ -205,13 +211,13 @@ def construir_html():
             if v.observacion:
                 H.append(f'<div class="sub">&#128221; {v.observacion}</div>')
 
-        # graficos del equipo
-        pngs = graficos.graficos_equipo(e)
-        H.append('<div class="graficos">')
-        H.append('<div>' + _img(pngs["tierra"]) + '</div>')
-        H.append('<div>' + _img(pngs["corrientes"]) + '</div>')
-        H.append('<div>' + _img(pngs["potencias"]) + '</div>')
-        H.append('</div>')
+            # graficos del equipo (solo si hay datos)
+            pngs = graficos.graficos_equipo(e)
+            H.append('<div class="graficos">')
+            H.append('<div>' + _img(pngs["tierra"]) + '</div>')
+            H.append('<div>' + _img(pngs["corrientes"]) + '</div>')
+            H.append('<div>' + _img(pngs["potencias"]) + '</div>')
+            H.append('</div>')
 
         H.append('</div>')   # fin .equipo
 
