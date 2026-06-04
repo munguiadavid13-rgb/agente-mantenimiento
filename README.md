@@ -73,6 +73,7 @@ agente-mantenimiento/
 ├── graficos.py                      # Genera los gráficos de línea (matplotlib)
 ├── dashboard.py                     # Genera el dashboard web estático (dashboard.html)
 ├── agregar_equipo.py                # Agrega un equipo (fila índice + hoja) sin desajustes
+├── revisar.py                       # Revisión automática: refresca el dashboard (sin notificar)
 ├── notificaciones.py                # Envío por correo (Gmail) y Telegram
 ├── config.py                        # Credenciales privadas (NO se comparte)
 ├── config.example.py                # Plantilla de credenciales (sí se comparte)
@@ -178,6 +179,29 @@ Esto genera el archivo **`dashboard.html`** y lo abre en el navegador. No levant
 servidor (no queda nada corriendo en segundo plano). Muestra **un equipo a la vez**, con
 dos menús desplegables para navegar: uno por **subestación** y otro por **equipo**. Para
 ver datos actualizados, vuelve a ejecutar `python dashboard.py`.
+
+### 🔄 Revisión automática (cada 50 min)
+
+`revisar.py` relee el Excel y **regenera el dashboard** sin abrir el navegador y **sin
+enviar notificaciones** (pensado para correr en segundo plano). Deja un registro en
+`revisiones_log.txt`.
+
+```bash
+python revisar.py
+```
+
+En Windows se programó con el **Programador de tareas** para que corra solo cada 50 minutos
+(tarea `AgenteMantenimiento_Revision`). Comandos útiles (en CMD):
+
+```bat
+schtasks /Query  /TN "AgenteMantenimiento_Revision"            :: ver estado
+schtasks /Change /TN "AgenteMantenimiento_Revision" /DISABLE   :: pausar
+schtasks /Change /TN "AgenteMantenimiento_Revision" /ENABLE    :: reanudar
+schtasks /Delete /TN "AgenteMantenimiento_Revision" /F         :: eliminar
+```
+
+> La revisión automática **no envía** correo ni Telegram (para no saturar). Las
+> notificaciones se mandan al ejecutar `python agente.py`.
 
 ---
 
