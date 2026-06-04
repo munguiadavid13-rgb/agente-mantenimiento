@@ -79,6 +79,7 @@ class Equipo:
         self.tipo = tipo                   # "interruptor" o "restaurador"
         self.subestacion = subestacion     # nombre de la S/E
         self.visitas = []                  # historial de visitas
+        self.ficha = {}                    # datos de placa: serie, marca, modelo, ...
 
     def agregar_visita(self, visita):
         self.visitas.append(visita)

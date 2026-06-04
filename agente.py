@@ -15,6 +15,7 @@ Autor: Jose David Perez Munguia - UTH 2026.4
 import os
 import html
 import datetime
+import unicodedata
 from openpyxl import load_workbook
 
 from modelos import Medicion, Visita, Subestacion
@@ -38,9 +39,69 @@ COLUMNAS = [
 ]
 
 
+# Ficha tecnica del equipo (datos de placa). Orden y etiqueta que se muestra:
+FICHA_CAMPOS = [
+    ("serie",     "Serie"),
+    ("marca",     "Marca"),
+    ("modelo",    "Modelo"),
+    ("tipo",      "Tipo"),
+    ("i_nominal", "I nominal (A)"),
+    ("tension",   "Tension"),
+    ("ano",       "Ano"),
+    ("icc",       "ICC"),
+]
+# Para reconocer la etiqueta en el Excel (normalizada) -> clave interna.
+FICHA_LABELS = {
+    "SERIE": "serie", "MARCA": "marca", "MODELO": "modelo", "TIPO": "tipo",
+    "I NOMINAL (A)": "i_nominal", "I NOMINAL": "i_nominal",
+    "TENSION": "tension", "ANO": "ano", "ICC": "icc",
+}
+
+
+def _norm(texto):
+    """Quita acentos, espacios y ':' finales, y pasa a mayusculas (para comparar)."""
+    if texto is None:
+        return ""
+    t = unicodedata.normalize("NFKD", str(texto)).encode("ascii", "ignore").decode()
+    return t.strip().rstrip(":").strip().upper()
+
+
+def _valor_derecha(fila, i):
+    """Primer valor no vacio a la derecha de la celda i (saltando vacias)."""
+    for j in range(i + 1, len(fila)):
+        v = fila[j].value
+        if v is None or str(v).strip() == "":
+            continue
+        if _norm(v) in FICHA_LABELS:        # choco con otra etiqueta -> sin valor
+            return None
+        return v
+    return None
+
+
 # ============================================================
 # Lectura del Excel -> arbol de objetos
 # ============================================================
+def _fila_encabezado(hoja):
+    """Devuelve el numero de fila donde empieza la tabla de visitas (la de 'Fecha')."""
+    for idx, fila in enumerate(hoja.iter_rows(values_only=True), start=1):
+        if fila and _norm(fila[0]) == "FECHA":
+            return idx
+    return 1                                 # por si la hoja no tiene ficha arriba
+
+
+def _leer_ficha(hoja, fila_header):
+    """Lee la ficha tecnica (datos de placa) de las filas por encima del encabezado."""
+    ficha = {}
+    for fila in hoja.iter_rows(min_row=1, max_row=max(1, fila_header - 1)):
+        for i, celda in enumerate(fila):
+            clave = FICHA_LABELS.get(_norm(celda.value))
+            if clave and clave not in ficha:
+                valor = _valor_derecha(fila, i)
+                if valor is not None and str(valor).strip() != "":
+                    ficha[clave] = valor
+    return ficha
+
+
 def cargar_limites(wb):
     """Devuelve {parametro: {criterio, limite}} desde la hoja Limites."""
     ws = wb["Limites"]
@@ -87,8 +148,10 @@ def construir_modelo(wb):
 
         # leer la hoja propia del equipo
         hoja = wb[codigo]
-        titulos = [c.value for c in hoja[1]]
-        for fila_v in hoja.iter_rows(min_row=2, values_only=True):
+        fila_header = _fila_encabezado(hoja)            # donde empieza la tabla de visitas
+        equipo.ficha = _leer_ficha(hoja, fila_header)   # datos de placa (arriba del encabezado)
+        titulos = [c.value for c in hoja[fila_header]]
+        for fila_v in hoja.iter_rows(min_row=fila_header + 1, values_only=True):
             datos = dict(zip(titulos, fila_v))
             if datos.get("Fecha") is None:  # fila vacia
                 continue
@@ -299,23 +362,15 @@ def _celda(contenido, extra=""):
     return f'<td style="padding:6px 10px;border:1px solid #dee2e6;{extra}">{contenido}</td>'
 
 
-def _cid(equipo, nombre):
-    """Content-ID seguro (solo alfanumerico) para una imagen del correo."""
-    base = f"{nombre}_{equipo.codigo}"
-    return "".join(c if c.isalnum() else "_" for c in base)
-
-
 def reporte_html(subestaciones, hoy):
     """
     Genera el correo HTML ENFOCADO en los equipos que tienen alerta.
     No incluye los equipos que estan bien: solo el/los equipo(s) en alerta
-    con su motivo, su ultima visita completa y graficos de su historico.
+    con su motivo y los datos de su ultima visita.
 
-    Devuelve (html, imagenes) donde imagenes es una lista de (cid, bytes_png)
-    que el HTML referencia como <img src="cid:..."> para incrustar los graficos.
+    Los graficos NO van en el correo (para mantenerlo ligero); el historico
+    grafico se consulta en el dashboard web. Devuelve solo el HTML.
     """
-    import graficos   # se importa aqui para no exigir matplotlib si no se usa
-
     hallazgos = todos_los_hallazgos(subestaciones)
 
     # equipos unicos con alerta, conservando el orden de aparicion
@@ -324,7 +379,6 @@ def reporte_html(subestaciones, hoy):
         if e not in equipos_alerta:
             equipos_alerta.append(e)
 
-    imagenes = []
     H = []
     H.append('<div style="font-family:Arial,Helvetica,sans-serif;color:#212529;'
              'max-width:760px;margin:auto;">')
@@ -382,26 +436,15 @@ def reporte_html(subestaciones, hoy):
                 H.append('<p style="font-size:12px;color:#6c757d;margin:0 0 12px;">'
                          f'&#128221; {_esc(v.observacion)}</p>')
 
-        # graficos del historico (PNG incrustados via cid)
-        pngs = graficos.graficos_equipo(e)
-        for nombre, etiqueta in [("tierra", "Resistencia de tierra (con limite)"),
-                                 ("corrientes", "Corrientes por fase"),
-                                 ("potencias", "Potencias: activa / reactiva / aparente")]:
-            cid = _cid(e, nombre)
-            imagenes.append((cid, pngs[nombre]))
-            H.append(f'<p style="margin:14px 0 4px;font-weight:bold;color:#495057;">'
-                     f'{etiqueta}</p>')
-            H.append(f'<img src="cid:{cid}" alt="{etiqueta}" '
-                     'style="width:100%;max-width:600px;border:1px solid #dee2e6;'
-                     'border-radius:6px;">')
-
+        H.append('<p style="font-size:12px;color:#6c757d;">Los graficos del historico '
+                 '(corrientes, potencias y tierra) se consultan en el dashboard web.</p>')
         H.append('<hr style="border:none;border-top:1px solid #dee2e6;margin:24px 0;">')
 
     H.append('<p style="font-size:12px;color:#adb5bd;margin-top:8px;">'
              'Generado automaticamente por el Agente de Mantenimiento Predictivo '
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</p>')
     H.append('</div></div>')
-    return "\n".join(H), imagenes
+    return "\n".join(H)
 
 
 # ============================================================
@@ -424,14 +467,12 @@ def main():
         try:
             import notificaciones
             print("\nEnviando notificaciones...")
-            html_correo, imagenes = reporte_html(subestaciones, hoy)   # HTML + graficos
             notificaciones.notificar(
                 "Agente de Mantenimiento - Hallazgos",
                 completo,                                  # correo: texto plano (respaldo)
                 reporte_corto(subestaciones, hoy),         # telegram: alerta corta
                 parse_mode_telegram="HTML",                # telegram con formato
-                cuerpo_html_correo=html_correo,            # correo: HTML segmentado
-                imagenes_correo=imagenes,                  # correo: graficos incrustados
+                cuerpo_html_correo=reporte_html(subestaciones, hoy),   # correo: HTML (sin graficos)
             )
         except ImportError:
             print("\n(Notificaciones aun no configuradas: falta config.py)")

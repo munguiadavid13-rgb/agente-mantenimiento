@@ -47,17 +47,26 @@ def agregar_equipo(subestacion, codigo, tipo, archivo=None):
     # 1) fila en el indice
     indice.append([subestacion, codigo, tipo])
 
-    # 2) hoja de datos con las columnas estandar
+    # 2) hoja de datos: ficha tecnica arriba (vacia) + tabla de visitas
     ws = wb.create_sheet(title=codigo[:31])
-    ws.append(_headers())
-    for c in ws[1]:
-        c.font = neg
+    ws.cell(1, 1, "FICHA TECNICA").font = neg
+    etiquetas = [et for _, et in agente.FICHA_CAMPOS]      # Serie, Marca, Modelo, ...
+    r = 2
+    for k in range(0, len(etiquetas), 2):
+        ws.cell(r, 1, etiquetas[k]).font = neg
+        if k + 1 < len(etiquetas):
+            ws.cell(r, 4, etiquetas[k + 1]).font = neg
+        r += 1
+    hr = r + 1                                             # fila en blanco, encabezado abajo
+    for j, h in enumerate(_headers(), start=1):
+        ws.cell(hr, j, h).font = neg
     dv = DataValidation(type="list", formula1=f'"{CUADRILLAS}"', allow_blank=True)
     ws.add_data_validation(dv)
-    dv.add("B2:B500")
-    ws.column_dimensions["A"].width = 12
-    ws.column_dimensions["B"].width = 10
-    ws.freeze_panes = "A2"
+    dv.add(f"B{hr + 1}:B{hr + 500}")
+    ws.column_dimensions["A"].width = 14
+    ws.column_dimensions["B"].width = 11
+    ws.column_dimensions["E"].width = 14
+    ws.freeze_panes = ws.cell(hr + 1, 1)
 
     # 3) reordenar: Equipos primero, equipos en orden del indice, Limites al final
     orden_idx = [r[1].value for r in indice.iter_rows(min_row=2) if r[1].value]

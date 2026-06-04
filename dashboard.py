@@ -23,6 +23,7 @@ Autor: Jose David Perez Munguia - UTH 2026.4
 import os
 import base64
 import datetime
+import html
 import webbrowser
 
 from openpyxl import load_workbook
@@ -48,6 +49,18 @@ def _badge_html(estado):
     """Etiqueta coloreada reutilizando los colores del agente."""
     fondo, texto = agente._COLORES.get(estado, ("#e2e3e5", "#41464b"))
     return f'<span class="badge" style="background:{fondo};color:{texto};">{estado}</span>'
+
+
+def _ficha_html(equipo):
+    """Muestra la ficha tecnica (datos de placa) como chips; solo campos con valor."""
+    items = []
+    for clave, etiqueta in agente.FICHA_CAMPOS:
+        val = equipo.ficha.get(clave)
+        if val is not None and str(val).strip() != "":
+            items.append(f'<span class="it"><b>{etiqueta}:</b> {html.escape(str(val))}</span>')
+    if not items:
+        return '<div class="sub" style="color:#adb5bd;">Sin ficha tecnica registrada.</div>'
+    return '<div class="ficha">' + "".join(items) + '</div>'
 
 
 ESTILOS = """
@@ -77,6 +90,10 @@ body { font-family: Arial, Helvetica, sans-serif; color:#212529;
 .equipo.verde { border-left:6px solid #198754; }
 .equipo h2 { margin:0 0 2px; font-size:18px; }
 .sub { color:#6c757d; font-size:13px; margin-bottom:12px; }
+.ficha { display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 16px; }
+.ficha .it { background:#eef2ff; border:1px solid #dfe3ff; border-radius:6px;
+             padding:4px 9px; font-size:12px; color:#41464b; }
+.ficha .it b { color:#3b3f5c; }
 table { border-collapse:collapse; width:100%; font-size:14px; margin-bottom:14px; }
 td { padding:6px 10px; border:1px solid #dee2e6; }
 .badge { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:bold; }
@@ -188,6 +205,9 @@ def construir_html():
         H.append(f'<div class="sub">{e.tipo} &mdash; {e.subestacion}'
                  + (f' &middot; ultima visita: {str(v.fecha)[:10]} '
                     f'(cuadrilla {v.cuadrilla})' if v else '') + '</div>')
+
+        # ficha tecnica (datos de placa)
+        H.append(_ficha_html(e))
 
         if v is None:
             # equipo registrado pero sin visitas todavia

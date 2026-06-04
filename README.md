@@ -35,8 +35,10 @@ de puesta a tierra, corrientes, potencias, número de operaciones). Este agente:
 - **Múltiples destinatarios:** la alerta puede enviarse a varios correos y varios chats de
   Telegram a la vez.
 - **Correo enfocado:** cuando hay una alerta, el correo se concentra **solo en el equipo
-  afectado**, con su última visita y **gráficos de línea** del histórico (corrientes,
-  potencias activa/reactiva/aparente y resistencia de tierra con su límite).
+  afectado**, con el motivo y los datos de su última visita (los gráficos quedan en el
+  dashboard para no recargar el correo).
+- **Ficha técnica por equipo:** cada equipo guarda sus datos de placa (serie, marca, modelo,
+  tipo, I nominal, tensión, año, ICC), que se muestran en el dashboard.
 - **Base de datos en Excel** con **una hoja por equipo** (datos separados, sin mezclar) y
   menús desplegables, fácil de llenar en campo.
 
@@ -87,7 +89,7 @@ Para mantener el orden y que **los datos de cada equipo no se mezclen**, el libr
 | Hoja | Contenido |
 |------|-----------|
 | `Equipos` | Índice: lista de subestaciones, código de cada interruptor y su tipo. |
-| `CTE-32L8`, `SIS-32L30`, ... | **Una hoja por equipo** con sus visitas (fecha, cuadrilla, mediciones, observación). |
+| `CTE-32L08`, `SIS-32L30`, ... | **Una hoja por equipo**: arriba su **ficha técnica** (serie, marca, modelo, tipo, I nominal, tensión, año, ICC) y debajo la tabla de visitas (fecha, cuadrilla, mediciones, observación). |
 | `Limites` | Parámetros con límite y su criterio (`minimo`/`maximo`). |
 
 > **Para agregar un equipo nuevo**, lo más seguro es usar el script `agregar_equipo.py`
