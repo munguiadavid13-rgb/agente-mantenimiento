@@ -30,4 +30,5 @@ TELEGRAM_CHAT_IDS = [
 # ---------- DASHBOARD WEB ----------
 # Si publicas el dashboard en internet (ej. GitHub Pages), pon aqui su URL y
 # aparecera como enlace en el correo y en Telegram. Dejalo "" si no lo publicas.
+# Ejemplo GitHub Pages: "https://TU_USUARIO.github.io/agente-mantenimiento/"
 DASHBOARD_URL = ""

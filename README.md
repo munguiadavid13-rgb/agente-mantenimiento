@@ -76,6 +76,7 @@ agente-mantenimiento/
 ├── agente.py                        # Programa principal: lee, clasifica, reporta, notifica
 ├── graficos.py                      # Genera los gráficos de línea (matplotlib)
 ├── dashboard.py                     # Genera el dashboard web estático (dashboard.html)
+├── publicar_dashboard.py            # Genera docs/index.html para publicarlo en GitHub Pages
 ├── agregar_equipo.py                # Agrega un equipo (fila índice + hoja) sin desajustes
 ├── revisar.py                       # Revisión automática: refresca el dashboard (sin notificar)
 ├── enviar_historico.py              # Envía el histórico de N visitas de un equipo a alguien puntual
@@ -216,9 +217,25 @@ python enviar_historico.py ISL-32L44 --demo
 Si pones una URL en `DASHBOARD_URL` (en `config.py`), el correo y Telegram incluyen un
 enlace **"Ver dashboard web"**. Si la dejas vacía (`""`), no aparece ningún enlace.
 
-> El `dashboard.html` es un archivo **local**. Una `file:///...` solo abre en **tu**
-> computadora. Para que el enlace sirva a otras personas habría que **publicarlo** en
-> internet (por ejemplo, GitHub Pages).
+### 🌍 Dashboard público (GitHub Pages)
+
+El dashboard está publicado en internet para que el enlace funcione **para todos**:
+
+**<https://munguiadavid13-rgb.github.io/agente-mantenimiento/>**
+
+Se sirve desde la carpeta **`docs/`** de la rama `main` (GitHub Pages). Para **actualizar**
+la página con datos nuevos:
+
+```bash
+python publicar_dashboard.py     # regenera docs/index.html (no abre navegador)
+git add docs
+git commit -m "Actualiza dashboard publicado"
+git push                         # GitHub Pages reconstruye en ~1 min
+```
+
+> ⚠️ La página es **pública**: cualquiera con el enlace la ve. Por eso el proyecto usa
+> **datos sintéticos**, no mediciones reales confidenciales. El `dashboard.html` local
+> (que abre `python dashboard.py`) sigue existiendo para uso en tu PC.
 
 ### 🔄 Revisión automática (cada 50 min)
 
