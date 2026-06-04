@@ -3,3 +3,4 @@
 
 openpyxl>=3.1
 matplotlib>=3.8
+flask>=3.0

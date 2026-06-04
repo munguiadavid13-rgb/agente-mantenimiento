@@ -30,8 +30,10 @@ de puesta a tierra, corrientes, potencias, número de operaciones). Este agente:
 - **Dos tipos de parámetro:** con límite (se clasifican) y de solo monitoreo (se registran
   para el histórico). El comportamiento se decide editando una tabla, **sin tocar código**.
 - **Histórico y tendencia:** compara las lecturas a lo largo del tiempo.
-- **Notificaciones** por correo (Gmail, HTML con tablas y gráficos) y Telegram (alerta con
-  formato).
+- **Tres canales de salida:** correo (Gmail, HTML con tablas y gráficos), Telegram (alerta
+  con formato) y **dashboard web en vivo** (Flask).
+- **Múltiples destinatarios:** la alerta puede enviarse a varios correos y varios chats de
+  Telegram a la vez.
 - **Correo enfocado:** cuando hay una alerta, el correo se concentra **solo en el equipo
   afectado**, con su última visita y **gráficos de línea** del histórico (corrientes,
   potencias activa/reactiva/aparente y resistencia de tierra con su límite).
@@ -67,6 +69,7 @@ agente-mantenimiento/
 ├── modelos.py                       # Las 4 clases POO
 ├── agente.py                        # Programa principal: lee, clasifica, reporta, notifica
 ├── graficos.py                      # Genera los gráficos de línea (matplotlib)
+├── dashboard.py                     # Dashboard web en vivo (Flask)
 ├── notificaciones.py                # Envío por correo (Gmail) y Telegram
 ├── config.py                        # Credenciales privadas (NO se comparte)
 ├── config.example.py                # Plantilla de credenciales (sí se comparte)
@@ -148,6 +151,19 @@ Gmail exige una **Contraseña de aplicación** (no la contraseña normal):
 
 El agente imprime el reporte en pantalla y, **si encuentra hallazgos**, los envía por
 correo y Telegram automáticamente.
+
+### 🌐 Dashboard web (en vivo)
+
+Además del correo y Telegram, hay un **tablero web** que muestra el estado de todos los
+equipos en tiempo real:
+
+```bash
+python dashboard.py
+```
+
+Luego abre **http://localhost:5000** en el navegador. Cada vez que recargas la página,
+vuelve a leer el Excel y actualiza el estado y los gráficos. Para detener el servidor,
+presiona `Ctrl+C` en la terminal.
 
 ---
 
