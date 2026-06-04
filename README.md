@@ -70,6 +70,7 @@ agente-mantenimiento/
 ├── agente.py                        # Programa principal: lee, clasifica, reporta, notifica
 ├── graficos.py                      # Genera los gráficos de línea (matplotlib)
 ├── dashboard.py                     # Genera el dashboard web estático (dashboard.html)
+├── agregar_equipo.py                # Agrega un equipo (fila índice + hoja) sin desajustes
 ├── notificaciones.py                # Envío por correo (Gmail) y Telegram
 ├── config.py                        # Credenciales privadas (NO se comparte)
 ├── config.example.py                # Plantilla de credenciales (sí se comparte)
@@ -89,8 +90,19 @@ Para mantener el orden y que **los datos de cada equipo no se mezclen**, el libr
 | `CTE-32L8`, `SIS-32L30`, ... | **Una hoja por equipo** con sus visitas (fecha, cuadrilla, mediciones, observación). |
 | `Limites` | Parámetros con límite y su criterio (`minimo`/`maximo`). |
 
-> Para agregar un equipo nuevo: añádelo en la hoja `Equipos` y crea una hoja con el mismo
-> código (mismas columnas que las demás hojas de equipo).
+> **Para agregar un equipo nuevo**, lo más seguro es usar el script `agregar_equipo.py`
+> (ver abajo): crea la fila del índice y la hoja de datos juntas, evitando desajustes.
+> Si lo haces a mano, recuerda que cada equipo necesita **dos cosas**: su fila en `Equipos`
+> y una hoja con el **mismo código exacto** (mismas columnas que las demás).
+
+#### Agregar un equipo con el script
+
+```bash
+python agregar_equipo.py "Coyoles Central" "CCE-32L43" "Restaurador"
+```
+
+O sin argumentos (`python agregar_equipo.py`) para que te lo pregunte paso a paso. Luego
+abres el Excel y llenas las visitas en la hoja del equipo.
 
 ---
 
