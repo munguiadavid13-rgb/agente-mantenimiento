@@ -177,8 +177,11 @@ Los límites viven en la hoja **Limites** del Excel. Cada parámetro se evalúa 
 | Voltaje AC | `minimo` | 🔴 REVISAR si el valor **≤ 119 V** (alimentación AC) |
 | Resistencia de tierra | `maximo` | 🔴 REVISAR si el valor **≥ 5 Ω** |
 
-Los demás parámetros (corrientes, potencias, número de operaciones) **no tienen límite**:
-son de **solo monitoreo** y sirven para el análisis histórico.
+Los demás parámetros (corriente de fuga, corrientes por fase, potencias, número de
+operaciones) **no tienen límite**: son de **solo monitoreo** y sirven para el análisis
+histórico. La **corriente de fuga (mA)** acompaña a la resistencia de tierra en la sección
+de puesta a tierra; si más adelante quieres clasificarla, basta agregar una fila con su
+criterio `maximo` en la hoja **Limites**.
 
 > 💡 Para cambiar un límite o agregar un parámetro, basta con editar la hoja **Limites**
 > del Excel; el código no se modifica.

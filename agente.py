@@ -28,6 +28,7 @@ COLUMNAS = [
     ("Voltaje VDC (V)",            "Voltaje VDC",        "V"),
     ("Voltaje AC (V)",             "Voltaje AC",         "V"),
     ("Resistencia tierra (Ohm)",   "Resistencia tierra", "Ohm"),
+    ("Corriente de fuga (mA)",     "Corriente de fuga",  "mA"),
     ("Corriente Fase A (A)",       "Corriente Fase A",   "A"),
     ("Corriente Fase B (A)",       "Corriente Fase B",   "A"),
     ("Corriente Fase C (A)",       "Corriente Fase C",   "A"),
@@ -186,6 +187,7 @@ def reporte_completo(subestaciones, hoy):
         L.append(_linea_param(v, "Voltaje AC", "Voltaje AC"))
         L.append("     Puesta a tierra:")
         L.append(_linea_param(v, "Resistencia tierra", "Resistencia tierra"))
+        L.append(_linea_param(v, "Corriente de fuga", "Corriente de fuga"))
         L.append("     Corrientes (monitoreo):")
         L.append(_linea_param(v, "Corriente Fase A", "Fase A"))
         L.append(_linea_param(v, "Corriente Fase B", "Fase B"))
