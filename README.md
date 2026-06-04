@@ -31,7 +31,7 @@ de puesta a tierra, corrientes, potencias, número de operaciones). Este agente:
   para el histórico). El comportamiento se decide editando una tabla, **sin tocar código**.
 - **Histórico y tendencia:** compara las lecturas a lo largo del tiempo.
 - **Tres canales de salida:** correo (Gmail, HTML con tablas y gráficos), Telegram (alerta
-  con formato) y **dashboard web en vivo** (Flask).
+  con formato) y **dashboard web** (HTML estático con navegación por desplegables).
 - **Múltiples destinatarios:** la alerta puede enviarse a varios correos y varios chats de
   Telegram a la vez.
 - **Correo enfocado:** cuando hay una alerta, el correo se concentra **solo en el equipo
@@ -69,7 +69,7 @@ agente-mantenimiento/
 ├── modelos.py                       # Las 4 clases POO
 ├── agente.py                        # Programa principal: lee, clasifica, reporta, notifica
 ├── graficos.py                      # Genera los gráficos de línea (matplotlib)
-├── dashboard.py                     # Dashboard web en vivo (Flask)
+├── dashboard.py                     # Genera el dashboard web estático (dashboard.html)
 ├── notificaciones.py                # Envío por correo (Gmail) y Telegram
 ├── config.py                        # Credenciales privadas (NO se comparte)
 ├── config.example.py                # Plantilla de credenciales (sí se comparte)
@@ -152,18 +152,18 @@ Gmail exige una **Contraseña de aplicación** (no la contraseña normal):
 El agente imprime el reporte en pantalla y, **si encuentra hallazgos**, los envía por
 correo y Telegram automáticamente.
 
-### 🌐 Dashboard web (en vivo)
+### 🌐 Dashboard web (estático)
 
-Además del correo y Telegram, hay un **tablero web** que muestra el estado de todos los
-equipos en tiempo real:
+Además del correo y Telegram, hay un **tablero web** que muestra el estado de los equipos:
 
 ```bash
 python dashboard.py
 ```
 
-Luego abre **http://localhost:5000** en el navegador. Cada vez que recargas la página,
-vuelve a leer el Excel y actualiza el estado y los gráficos. Para detener el servidor,
-presiona `Ctrl+C` en la terminal.
+Esto genera el archivo **`dashboard.html`** y lo abre en el navegador. No levanta ningún
+servidor (no queda nada corriendo en segundo plano). Muestra **un equipo a la vez**, con
+dos menús desplegables para navegar: uno por **subestación** y otro por **equipo**. Para
+ver datos actualizados, vuelve a ejecutar `python dashboard.py`.
 
 ---
 

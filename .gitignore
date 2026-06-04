@@ -4,3 +4,6 @@ config.py
 # Cache de Python
 __pycache__/
 *.pyc
+
+# Dashboard generado (se crea con: python dashboard.py)
+dashboard.html
