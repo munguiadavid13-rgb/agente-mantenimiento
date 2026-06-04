@@ -1,0 +1,6 @@
+# Credenciales privadas: NUNCA subir a internet
+config.py
+
+# Cache de Python
+__pycache__/
+*.pyc

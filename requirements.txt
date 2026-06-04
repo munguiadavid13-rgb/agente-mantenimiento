@@ -1,0 +1,5 @@
+# Dependencias del Agente de Mantenimiento Predictivo
+# Instalar con:  pip install -r requirements.txt
+
+openpyxl>=3.1
+matplotlib>=3.8
