@@ -1,7 +1,7 @@
 """
 agente.py
 ---------
-Agente de Mantenimiento Predictivo de subestaciones electricas.
+Agente Buchholz - Mantenimiento Predictivo de subestaciones electricas.
 
 Flujo:
   1. Lee el Excel 'Mantenimiento_Subestaciones.xlsx' (hojas Mediciones y Limites).
@@ -209,7 +209,7 @@ def reporte_completo(subestaciones, hoy):
 
     # ---- encabezado ----
     L.append(SEP)
-    L.append("        AGENTE DE MANTENIMIENTO PREDICTIVO")
+    L.append("        AGENTE BUCHHOLZ - MANTENIMIENTO PREDICTIVO")
     L.append(f"        Reporte generado: {hoy}")
     L.append(SEP)
     L.append("")
@@ -316,7 +316,7 @@ def reporte_corto(subestaciones, hoy):
     """
     hallazgos = todos_los_hallazgos(subestaciones)
     L = []
-    L.append("\U0001F527 <b>AGENTE DE MANTENIMIENTO - ALERTA</b>")
+    L.append("\U0001F527 <b>AGENTE BUCHHOLZ - ALERTA</b>")
     L.append(f"\U0001F4C5 {hoy}")
     if hallazgos:
         L.append(f"⚠️ <b>{len(hallazgos)} hallazgo(s)</b> requieren accion")
@@ -389,7 +389,7 @@ def reporte_html(subestaciones, hoy):
     # ---- encabezado (rojo: es una alerta) ----
     H.append('<div style="background:#dc3545;color:#fff;padding:16px 20px;'
              'border-radius:8px 8px 0 0;">')
-    H.append('<h2 style="margin:0;">&#9888;&#65039; Alerta de Mantenimiento Predictivo</h2>')
+    H.append('<h2 style="margin:0;">&#9888;&#65039; Agente Buchholz &mdash; Alerta de Mantenimiento</h2>')
     H.append(f'<p style="margin:4px 0 0;opacity:.9;">Reporte generado: {hoy} '
              f'&middot; {len(equipos_alerta)} equipo(s) en alerta</p>')
     H.append('</div>')
@@ -444,7 +444,7 @@ def reporte_html(subestaciones, hoy):
         H.append('<hr style="border:none;border-top:1px solid #dee2e6;margin:24px 0;">')
 
     H.append('<p style="font-size:12px;color:#adb5bd;margin-top:8px;">'
-             'Generado automaticamente por el Agente de Mantenimiento Predictivo '
+             'Generado automaticamente por el Agente Buchholz (mantenimiento predictivo) '
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</p>')
     H.append('</div></div>')
     return "\n".join(H)
@@ -508,7 +508,8 @@ def _html_cambio(actuales, nuevas, resueltas, hoy):
          'max-width:680px;margin:auto;">']
     H.append('<div style="background:#0d6efd;color:#fff;padding:14px 18px;'
              'border-radius:8px 8px 0 0;"><h2 style="margin:0;">&#128276; '
-             f'Cambios en alertas</h2><p style="margin:4px 0 0;opacity:.9;">{hoy}</p></div>')
+             f'Agente Buchholz &mdash; Cambios en alertas</h2>'
+             f'<p style="margin:4px 0 0;opacity:.9;">{hoy}</p></div>')
     H.append('<div style="border:1px solid #dee2e6;border-top:none;padding:18px;'
              'border-radius:0 0 8px 8px;">')
     if nuevas:
@@ -563,7 +564,7 @@ def notificar_si_cambio(subestaciones, hoy, enviar=True):
         try:
             import notificaciones
             notificaciones.notificar(
-                "Agente de Mantenimiento - Cambios en alertas",
+                "Agente Buchholz - Cambios en alertas",
                 _texto_cambio(actuales, nuevas, resueltas, hoy),
                 _texto_telegram_cambio(actuales, nuevas, resueltas, hoy),
                 parse_mode_telegram="HTML",
@@ -596,7 +597,7 @@ def main():
             import notificaciones
             print("\nEnviando notificaciones...")
             notificaciones.notificar(
-                "Agente de Mantenimiento - Hallazgos",
+                "Agente Buchholz - Hallazgos",
                 completo,                                  # correo: texto plano (respaldo)
                 reporte_corto(subestaciones, hoy),         # telegram: alerta corta
                 parse_mode_telegram="HTML",                # telegram con formato

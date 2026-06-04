@@ -1,12 +1,16 @@
-# Agente de Mantenimiento Predictivo de Subestaciones Eléctricas
+# ⚡ Agente Buchholz — Mantenimiento Predictivo de Subestaciones Eléctricas
 
 Proyecto final del curso de **Programación** — Maestría en Automatización Industrial,
 Universidad Tecnológica de Honduras (UTH), periodo **2026.4**.
 
-Agente que analiza las mediciones de las visitas de mantenimiento a interruptores y
+**Agente Buchholz** analiza las mediciones de las visitas de mantenimiento a interruptores y
 restauradores de subestaciones, **clasifica** los parámetros críticos, lleva un
 **histórico** para detectar tendencias (mantenimiento *predictivo*) y **notifica**
-automáticamente los hallazgos por **correo** y **Telegram**.
+automáticamente los hallazgos por **correo**, **Telegram** y un **dashboard web**.
+
+> El nombre es un homenaje al **relé Buchholz**, dispositivo de protección que da *aviso
+> temprano* de fallas incipientes en transformadores — justo el espíritu de un agente de
+> mantenimiento predictivo: vigilar y avisar antes de que la falla sea grave.
 
 ---
 

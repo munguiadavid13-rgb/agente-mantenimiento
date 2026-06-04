@@ -160,12 +160,14 @@ def construir_html():
     H = []
     H.append('<!doctype html><html lang="es"><head><meta charset="utf-8">')
     H.append('<meta name="viewport" content="width=device-width, initial-scale=1">')
-    H.append('<title>Dashboard - Agente de Mantenimiento</title>')
+    H.append('<title>Agente Buchholz - Dashboard de Mantenimiento</title>')
     H.append(f'<style>{ESTILOS}</style></head><body>')
 
     # barra superior
     H.append('<div class="barra">'
-             '<h1>&#128295; Agente de Mantenimiento Predictivo</h1>'
+             '<h1>&#9889; Agente Buchholz</h1>'
+             '<p style="margin:2px 0 0;font-size:14px;">Mantenimiento predictivo '
+             'de subestaciones electricas</p>'
              f'<p>Dashboard generado: {hoy} &middot; '
              'para actualizar, vuelve a ejecutar <b>python dashboard.py</b></p></div>')
 
@@ -241,7 +243,7 @@ def construir_html():
 
         H.append('</div>')   # fin .equipo
 
-    H.append('<div class="pie">Agente de Mantenimiento Predictivo '
+    H.append('<div class="pie">Agente Buchholz &middot; Mantenimiento Predictivo '
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</div>')
     H.append('</div>')                       # fin .contenido
     H.append(f'<script>{SCRIPT}</script>')
