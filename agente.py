@@ -343,13 +343,18 @@ def _boton_html_dashboard():
             '&#127760; Ver dashboard web</a></p>')
 
 
-def reporte_corto(subestaciones, hoy):
+def reporte_corto(subestaciones, hoy, hallazgos=None):
     """
     Alerta breve para Telegram con formato HTML (emojis + negritas).
     Telegram HTML solo admite <b>, <i>, <u>, <code>, etc.; los saltos de
     linea son '\\n' normales y el texto dinamico se escapa con _esc().
+
+    Si se pasa 'hallazgos' (lista de (equipo, visita, medicion)) el mensaje se
+    limita a esos; si no, usa todos los del modelo. Asi se puede armar una
+    alerta para UN solo equipo y enviarla en su propia notificacion.
     """
-    hallazgos = todos_los_hallazgos(subestaciones)
+    if hallazgos is None:
+        hallazgos = todos_los_hallazgos(subestaciones)
     L = []
     L.append("\U0001F527 <b>AGENTE BUCHHOLZ - ALERTA</b>")
     L.append(f"\U0001F4C5 {hoy}")
@@ -358,12 +363,12 @@ def reporte_corto(subestaciones, hoy):
     else:
         L.append("✅ <b>Sin hallazgos</b>: todos los parametros con limite estan NORMAL")
 
-    for e, v, m in hallazgos:
+    for i, (e, v, m) in enumerate(hallazgos, 1):
         criterio = "max" if m.criterio == "maximo" else "min"
         flecha = _emoji_tendencia(e.tendencia(m.parametro))
         fecha_corta = str(v.fecha)[:10]
         L.append("")
-        L.append(f"\U0001F534 <b>{_esc(e.codigo)}</b> <i>({_esc(e.tipo)})</i> - {_esc(e.subestacion)}")
+        L.append(f"\U0001F534 <b>{i}. {_esc(e.codigo)}</b> <i>({_esc(e.tipo)})</i> - {_esc(e.subestacion)}")
         L.append(f"   • {_esc(m.parametro)}: <b>{m.valor} {_esc(m.unidad)}</b> "
                  f"(limite {criterio} {m.limite}) {flecha}".rstrip())
         L.append(f"   • \U0001F4CD Cuadrilla {_esc(v.cuadrilla)} · {fecha_corta}")
@@ -404,7 +409,7 @@ def _celda(contenido, extra=""):
     return f'<td style="padding:6px 10px;border:1px solid #dee2e6;{extra}">{contenido}</td>'
 
 
-def reporte_html(subestaciones, hoy):
+def reporte_html(subestaciones, hoy, hallazgos=None):
     """
     Genera el correo HTML ENFOCADO en los equipos que tienen alerta.
     No incluye los equipos que estan bien: solo el/los equipo(s) en alerta
@@ -412,8 +417,13 @@ def reporte_html(subestaciones, hoy):
 
     Los graficos NO van en el correo (para mantenerlo ligero); el historico
     grafico se consulta en el dashboard web. Devuelve solo el HTML.
+
+    Si se pasa 'hallazgos' (lista de (equipo, visita, medicion)) el correo se
+    limita a esos equipos; si no, usa todos. Asi cada equipo en alerta puede
+    ir en su propio correo.
     """
-    hallazgos = todos_los_hallazgos(subestaciones)
+    if hallazgos is None:
+        hallazgos = todos_los_hallazgos(subestaciones)
 
     # equipos unicos con alerta, conservando el orden de aparicion
     equipos_alerta = []
@@ -435,12 +445,12 @@ def reporte_html(subestaciones, hoy):
     H.append('<div style="border:1px solid #dee2e6;border-top:none;padding:20px;'
              'border-radius:0 0 8px 8px;">')
 
-    # ---- una seccion por equipo en alerta ----
-    for e in equipos_alerta:
+    # ---- una seccion NUMERADA por equipo en alerta ----
+    for i, e in enumerate(equipos_alerta, 1):
         suyos = [(vv, mm) for (ee, vv, mm) in hallazgos if ee is e]
 
         H.append('<h3 style="border-bottom:2px solid #dc3545;padding-bottom:4px;">'
-                 f'&#128295; {_esc(e.codigo)} '
+                 f'<span style="color:#dc3545;">{i}.</span> &#128295; {_esc(e.codigo)} '
                  '<span style="font-weight:normal;color:#6c757d;font-size:15px;">'
                  f'({_esc(e.tipo)}) &mdash; {_esc(e.subestacion)}</span></h3>')
 
@@ -488,6 +498,57 @@ def reporte_html(subestaciones, hoy):
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</p>')
     H.append('</div></div>')
     return "\n".join(H)
+
+
+def reporte_texto_resumen(subestaciones, hoy, hallazgos=None):
+    """Respaldo en texto plano (para el correo) con TODAS las alertas
+    enumeradas (1, 2, 3...). Es la version simple del correo HTML."""
+    if hallazgos is None:
+        hallazgos = todos_los_hallazgos(subestaciones)
+    L = [f"Agente Buchholz - Alertas - {hoy}",
+         f"{len(hallazgos)} alerta(s) requieren accion:", ""]
+    for i, (e, v, m) in enumerate(hallazgos, 1):
+        criterio = "max" if m.criterio == "maximo" else "min"
+        L.append(f"{i}. {e.codigo} ({e.tipo}) - {e.subestacion}")
+        L.append(f"     {m.parametro} = {m.valor} {m.unidad} "
+                 f"(limite {criterio} {m.limite}) · visita {str(v.fecha)[:10]} · "
+                 f"tendencia {e.tendencia(m.parametro)}")
+        if v.observacion:
+            L.append(f"     Obs: {v.observacion}")
+    return "\n".join(L)
+
+
+def enviar_resumen(subestaciones, hoy, destinatarios_correo=None,
+                   chat_ids_telegram=None):
+    """
+    Envia UNA sola notificacion (correo + Telegram) con TODAS las alertas
+    enumeradas, en vez de un mensaje por equipo. Asi no caen varias
+    notificaciones: 1 correo y 1 mensaje de Telegram, con la lista numerada.
+
+    destinatarios_correo / chat_ids_telegram: si se dan, se envia SOLO a esos
+    (util para una prueba dirigida, ej. solo a Jose David); si son None, usa los
+    de config.py. Devuelve cuantas alertas habia.
+    """
+    hallazgos = todos_los_hallazgos(subestaciones)
+    if not hallazgos:
+        return 0
+
+    n_equipos = len({e for e, _, _ in hallazgos})
+    asunto = (f"Agente Buchholz - {len(hallazgos)} alerta(s) en "
+              f"{n_equipos} equipo(s)")
+    print(f"  -> Enviando 1 notificacion con {len(hallazgos)} alerta(s) enumeradas...")
+
+    import notificaciones
+    notificaciones.notificar(
+        asunto,
+        reporte_texto_resumen(subestaciones, hoy),     # correo: texto plano (respaldo)
+        reporte_corto(subestaciones, hoy),             # telegram: lista numerada
+        parse_mode_telegram="HTML",
+        cuerpo_html_correo=reporte_html(subestaciones, hoy),   # correo: HTML numerado
+        destinatarios_correo=destinatarios_correo,
+        chat_ids_telegram=chat_ids_telegram,
+    )
+    return len(hallazgos)
 
 
 # ============================================================
@@ -636,18 +697,13 @@ def main():
     completo = reporte_completo(subestaciones, hoy)
     print(completo)
 
-    # Notificar solo si hay algo que revisar
+    # Notificar solo si hay algo que revisar.
+    # UNA sola notificacion (correo + Telegram) con las alertas enumeradas.
     if todos_los_hallazgos(subestaciones):
         try:
-            import notificaciones
-            print("\nEnviando notificaciones...")
-            notificaciones.notificar(
-                "Agente Buchholz - Hallazgos",
-                completo,                                  # correo: texto plano (respaldo)
-                reporte_corto(subestaciones, hoy),         # telegram: alerta corta
-                parse_mode_telegram="HTML",                # telegram con formato
-                cuerpo_html_correo=reporte_html(subestaciones, hoy),   # correo: HTML (sin graficos)
-            )
+            print("\nEnviando notificacion con las alertas enumeradas...")
+            n = enviar_resumen(subestaciones, hoy)
+            print(f"Listo: 1 notificacion con {n} alerta(s).")
         except ImportError:
             print("\n(Notificaciones aun no configuradas: falta config.py)")
         except Exception as e:

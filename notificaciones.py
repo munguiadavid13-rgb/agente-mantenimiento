@@ -118,22 +118,26 @@ def enviar_telegram(texto, parse_mode=None, chat_ids=None):
 
 
 def notificar(asunto, cuerpo_correo, texto_telegram=None, parse_mode_telegram=None,
-              cuerpo_html_correo=None, imagenes_correo=None):
+              cuerpo_html_correo=None, imagenes_correo=None,
+              destinatarios_correo=None, chat_ids_telegram=None):
     """
     Intenta enviar por los dos canales; si uno falla, avisa pero no se cae.
     Si no se da texto_telegram, usa el mismo cuerpo del correo.
-    parse_mode_telegram: "HTML" para enviar el mensaje de Telegram con formato.
-    cuerpo_html_correo : version HTML del correo (tablas/colores); opcional.
-    imagenes_correo    : lista de (cid, bytes_png) con los graficos a incrustar.
+    parse_mode_telegram : "HTML" para enviar el mensaje de Telegram con formato.
+    cuerpo_html_correo  : version HTML del correo (tablas/colores); opcional.
+    imagenes_correo     : lista de (cid, bytes_png) con los graficos a incrustar.
+    destinatarios_correo: correos a quien enviar SOLO esta vez (None = los de config).
+    chat_ids_telegram   : chat_id a quien enviar SOLO esta vez (None = los de config).
     """
     if texto_telegram is None:
         texto_telegram = cuerpo_correo
     try:
         enviar_correo(asunto, cuerpo_correo, cuerpo_html=cuerpo_html_correo,
-                      imagenes=imagenes_correo)
+                      imagenes=imagenes_correo, destinatarios=destinatarios_correo)
     except Exception as e:
         print("  -> Error enviando correo:", e)
     try:
-        enviar_telegram(texto_telegram, parse_mode=parse_mode_telegram)
+        enviar_telegram(texto_telegram, parse_mode=parse_mode_telegram,
+                        chat_ids=chat_ids_telegram)
     except Exception as e:
         print("  -> Error enviando Telegram:", e)
