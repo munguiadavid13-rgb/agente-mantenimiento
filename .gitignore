@@ -8,8 +8,9 @@ __pycache__/
 # Dashboard generado (se crea con: python dashboard.py)
 dashboard.html
 
-# Log de las revisiones automaticas
+# Log de las revisiones automaticas y estado de alertas (locales)
 revisiones_log.txt
+estado_alertas.json
 
 # Archivos temporales de Excel (cuando el libro esta abierto)
 ~$*

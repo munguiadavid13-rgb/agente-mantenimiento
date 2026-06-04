@@ -200,8 +200,20 @@ schtasks /Change /TN "AgenteMantenimiento_Revision" /ENABLE    :: reanudar
 schtasks /Delete /TN "AgenteMantenimiento_Revision" /F         :: eliminar
 ```
 
-> La revisión automática **no envía** correo ni Telegram (para no saturar). Las
-> notificaciones se mandan al ejecutar `python agente.py`.
+> La revisión automática solo notifica **cuando algo cambia** (ver abajo); si nada cambia,
+> no manda nada. Una notificación "a la fuerza" (siempre que haya hallazgos) se hace con
+> `python agente.py`.
+
+### 🔔 Notificar solo cuando algo cambia
+
+Para no saturar, la revisión automática recuerda qué alertas ya conocía (en
+`estado_alertas.json`) y **solo envía correo + Telegram cuando hay un cambio**: una alerta
+**nueva** (un equipo entra en REVISAR) o una **resuelta** (deja de estarlo). Si las alertas
+son las mismas que la última vez, no envía nada.
+
+- La identidad de una alerta es `EQUIPO|parámetro` (p. ej. `ISL-32L44|Resistencia tierra`).
+- Lo gestiona `agente.notificar_si_cambio(...)`, que usa `revisar.py` en cada corrida.
+- `python agente.py` (manual) **siempre** notifica si hay hallazgos, sin importar el estado.
 
 ---
 

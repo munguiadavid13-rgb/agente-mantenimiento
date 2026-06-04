@@ -13,6 +13,7 @@ Autor: Jose David Perez Munguia - UTH 2026.4
 """
 
 import os
+import json
 import html
 import datetime
 import unicodedata
@@ -23,6 +24,8 @@ from modelos import Medicion, Visita, Subestacion
 # Ruta del Excel: misma carpeta que este archivo
 CARPETA = os.path.dirname(os.path.abspath(__file__))
 ARCHIVO = os.path.join(CARPETA, "Mantenimiento_Subestaciones.xlsx")
+# Archivo donde se recuerda que alertas ya se conocian (para notificar solo cambios)
+ESTADO_ALERTAS = os.path.join(CARPETA, "estado_alertas.json")
 
 # Todos los parametros que se miden: (columna en Excel, nombre, unidad)
 COLUMNAS = [
@@ -445,6 +448,131 @@ def reporte_html(subestaciones, hoy):
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</p>')
     H.append('</div></div>')
     return "\n".join(H)
+
+
+# ============================================================
+# Notificar SOLO cuando algo cambie (alertas nuevas o resueltas)
+# ============================================================
+def _cargar_estado_alertas():
+    """Conjunto de claves de alerta ('CODIGO|parametro') que ya se conocian."""
+    try:
+        with open(ESTADO_ALERTAS, encoding="utf-8") as f:
+            return set(json.load(f))
+    except (FileNotFoundError, ValueError, OSError):
+        return set()
+
+
+def _guardar_estado_alertas(claves):
+    with open(ESTADO_ALERTAS, "w", encoding="utf-8") as f:
+        json.dump(sorted(claves), f, ensure_ascii=False, indent=2)
+
+
+def _texto_telegram_cambio(actuales, nuevas, resueltas, hoy):
+    L = ["\U0001F514 <b>Cambios en alertas</b>", f"\U0001F4C5 {hoy}"]
+    if nuevas:
+        L.append("")
+        L.append(f"\U0001F534 <b>Nuevas ({len(nuevas)}):</b>")
+        for k in nuevas:
+            e, v, m = actuales[k]
+            crit = "max" if m.criterio == "maximo" else "min"
+            L.append(f"  • <b>{_esc(e.codigo)}</b> ({_esc(e.subestacion)}): "
+                     f"{_esc(m.parametro)} = <b>{m.valor} {_esc(m.unidad)}</b> "
+                     f"(limite {crit} {m.limite})")
+    if resueltas:
+        L.append("")
+        L.append(f"✅ <b>Resueltas ({len(resueltas)}):</b>")
+        for k in resueltas:
+            cod, par = k.split("|", 1)
+            L.append(f"  • <b>{_esc(cod)}</b>: {_esc(par)}")
+    return "\n".join(L)
+
+
+def _texto_cambio(actuales, nuevas, resueltas, hoy):
+    L = [f"Cambios en alertas - {hoy}", ""]
+    if nuevas:
+        L.append("NUEVAS:")
+        for k in nuevas:
+            e, v, m = actuales[k]
+            L.append(f"  {e.codigo} ({e.subestacion}): {m.parametro} = "
+                     f"{m.valor} {m.unidad} (limite {m.limite})")
+    if resueltas:
+        L.append("RESUELTAS:")
+        for k in resueltas:
+            cod, par = k.split("|", 1)
+            L.append(f"  {cod}: {par}")
+    return "\n".join(L)
+
+
+def _html_cambio(actuales, nuevas, resueltas, hoy):
+    H = ['<div style="font-family:Arial,Helvetica,sans-serif;color:#212529;'
+         'max-width:680px;margin:auto;">']
+    H.append('<div style="background:#0d6efd;color:#fff;padding:14px 18px;'
+             'border-radius:8px 8px 0 0;"><h2 style="margin:0;">&#128276; '
+             f'Cambios en alertas</h2><p style="margin:4px 0 0;opacity:.9;">{hoy}</p></div>')
+    H.append('<div style="border:1px solid #dee2e6;border-top:none;padding:18px;'
+             'border-radius:0 0 8px 8px;">')
+    if nuevas:
+        H.append('<h3 style="color:#842029;border-bottom:2px solid #dc3545;'
+                 'padding-bottom:4px;">&#128308; Nuevas alertas</h3>')
+        H.append('<table style="border-collapse:collapse;width:100%;font-size:14px;'
+                 'margin-bottom:16px;"><tr style="background:#f8f9fa;">')
+        for c in ["Equipo", "Subestacion", "Parametro", "Medido", "Limite", "Fecha"]:
+            H.append(f'<th style="padding:6px 10px;border:1px solid #dee2e6;'
+                     f'text-align:left;">{c}</th>')
+        H.append('</tr>')
+        for k in nuevas:
+            e, v, m = actuales[k]
+            crit = "max" if m.criterio == "maximo" else "min"
+            H.append('<tr style="background:#fff5f5;">'
+                     + _celda(f'<b>{_esc(e.codigo)}</b>') + _celda(_esc(e.subestacion))
+                     + _celda(_esc(m.parametro))
+                     + _celda(f'<b style="color:#842029;">{m.valor} {_esc(m.unidad)}</b>')
+                     + _celda(f'{crit} {m.limite}') + _celda(str(v.fecha)[:10]) + '</tr>')
+        H.append('</table>')
+    if resueltas:
+        H.append('<h3 style="color:#0f5132;border-bottom:2px solid #198754;'
+                 'padding-bottom:4px;">&#9989; Resueltas</h3><ul>')
+        for k in resueltas:
+            cod, par = k.split("|", 1)
+            H.append(f'<li><b>{_esc(cod)}</b>: {_esc(par)}</li>')
+        H.append('</ul>')
+    H.append('<p style="font-size:12px;color:#adb5bd;margin-top:14px;">Notificacion '
+             'automatica de cambios &middot; consulta el dashboard para el detalle.</p>')
+    H.append('</div></div>')
+    return "\n".join(H)
+
+
+def notificar_si_cambio(subestaciones, hoy, enviar=True):
+    """
+    Compara las alertas actuales con las ya conocidas (estado_alertas.json) y
+    notifica SOLO si hay alertas nuevas o resueltas. Devuelve True si hubo cambio.
+    Pensado para la revision automatica (no satura: si nada cambia, no manda nada).
+    """
+    hallazgos = todos_los_hallazgos(subestaciones)
+    actuales = {f"{e.codigo}|{m.parametro}": (e, v, m) for e, v, m in hallazgos}
+    previas = _cargar_estado_alertas()
+    nuevas = [k for k in actuales if k not in previas]
+    resueltas = [k for k in previas if k not in actuales]
+
+    if not nuevas and not resueltas:
+        print("Sin cambios en las alertas; no se notifica.")
+        return False
+
+    print(f"Cambios: {len(nuevas)} nueva(s), {len(resueltas)} resuelta(s).")
+    if enviar:
+        try:
+            import notificaciones
+            notificaciones.notificar(
+                "Agente de Mantenimiento - Cambios en alertas",
+                _texto_cambio(actuales, nuevas, resueltas, hoy),
+                _texto_telegram_cambio(actuales, nuevas, resueltas, hoy),
+                parse_mode_telegram="HTML",
+                cuerpo_html_correo=_html_cambio(actuales, nuevas, resueltas, hoy),
+            )
+        except Exception as e:
+            print("  -> No se pudo notificar:", e)
+    _guardar_estado_alertas(actuales.keys())
+    return True
 
 
 # ============================================================

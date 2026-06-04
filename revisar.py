@@ -38,10 +38,14 @@ def revisar():
         with open(dashboard.SALIDA, "w", encoding="utf-8") as f:
             f.write(html)
 
+        # notificar SOLO si hay alertas nuevas o resueltas (sin saturar)
+        hubo_cambio = agente.notificar_si_cambio(subs, datetime.date.today().isoformat())
+
         codigos = sorted({e.codigo for e, v, m in hallazgos})
         detalle = (" Hallazgos en: " + ", ".join(codigos)) if codigos else ""
+        aviso = " NOTIFICADO (cambios)." if hubo_cambio else " Sin cambios."
         linea = (f"[{momento}] OK - {len(equipos)} equipos, "
-                 f"{len(hallazgos)} hallazgo(s). Dashboard actualizado.{detalle}")
+                 f"{len(hallazgos)} hallazgo(s). Dashboard actualizado.{aviso}{detalle}")
     except Exception as e:
         linea = f"[{momento}] ERROR: {e}"
 
