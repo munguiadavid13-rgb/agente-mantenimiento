@@ -308,6 +308,41 @@ def _esc(texto):
     return html.escape(str(texto))
 
 
+def _url_dashboard():
+    """
+    URL publica del dashboard web, tomada de config.DASHBOARD_URL.
+    Si no esta configurada (o esta vacia) devuelve '' y los mensajes no
+    muestran ningun enlace. El dashboard es un archivo HTML; para tener un
+    enlace que sirva a otras personas hay que publicarlo (GitHub Pages, etc.).
+    """
+    try:
+        import config
+        return (getattr(config, "DASHBOARD_URL", "") or "").strip()
+    except Exception:
+        return ""
+
+
+def _enlace_telegram_dashboard():
+    """Linea con el enlace al dashboard para Telegram (HTML); '' si no hay URL."""
+    url = _url_dashboard()
+    if not url:
+        return ""
+    return f'\U0001F310 <a href="{html.escape(url, quote=True)}">Ver dashboard web</a>'
+
+
+def _boton_html_dashboard():
+    """Boton/enlace al dashboard para los correos HTML; '' si no hay URL."""
+    url = _url_dashboard()
+    if not url:
+        return ""
+    u = html.escape(url, quote=True)
+    return ('<p style="margin:18px 0;text-align:center;">'
+            f'<a href="{u}" style="background:#0d6efd;color:#fff;'
+            'text-decoration:none;padding:10px 20px;border-radius:6px;'
+            'font-weight:bold;display:inline-block;">'
+            '&#127760; Ver dashboard web</a></p>')
+
+
 def reporte_corto(subestaciones, hoy):
     """
     Alerta breve para Telegram con formato HTML (emojis + negritas).
@@ -338,6 +373,10 @@ def reporte_corto(subestaciones, hoy):
     if hallazgos:
         L.append("")
         L.append("\U0001F4E7 <i>Detalle completo enviado al correo.</i>")
+    enlace = _enlace_telegram_dashboard()
+    if enlace:
+        L.append("")
+        L.append(enlace)
     return "\n".join(L)
 
 
@@ -443,6 +482,7 @@ def reporte_html(subestaciones, hoy):
                  '(corrientes, potencias y tierra) se consultan en el dashboard web.</p>')
         H.append('<hr style="border:none;border-top:1px solid #dee2e6;margin:24px 0;">')
 
+    H.append(_boton_html_dashboard())
     H.append('<p style="font-size:12px;color:#adb5bd;margin-top:8px;">'
              'Generado automaticamente por el Agente Buchholz (mantenimiento predictivo) '
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</p>')
@@ -484,6 +524,10 @@ def _texto_telegram_cambio(actuales, nuevas, resueltas, hoy):
         for k in resueltas:
             cod, par = k.split("|", 1)
             L.append(f"  • <b>{_esc(cod)}</b>: {_esc(par)}")
+    enlace = _enlace_telegram_dashboard()
+    if enlace:
+        L.append("")
+        L.append(enlace)
     return "\n".join(L)
 
 
@@ -537,6 +581,7 @@ def _html_cambio(actuales, nuevas, resueltas, hoy):
             cod, par = k.split("|", 1)
             H.append(f'<li><b>{_esc(cod)}</b>: {_esc(par)}</li>')
         H.append('</ul>')
+    H.append(_boton_html_dashboard())
     H.append('<p style="font-size:12px;color:#adb5bd;margin-top:14px;">Notificacion '
              'automatica de cambios &middot; consulta el dashboard para el detalle.</p>')
     H.append('</div></div>')

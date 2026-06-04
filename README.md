@@ -78,6 +78,7 @@ agente-mantenimiento/
 ├── dashboard.py                     # Genera el dashboard web estático (dashboard.html)
 ├── agregar_equipo.py                # Agrega un equipo (fila índice + hoja) sin desajustes
 ├── revisar.py                       # Revisión automática: refresca el dashboard (sin notificar)
+├── enviar_historico.py              # Envía el histórico de N visitas de un equipo a alguien puntual
 ├── notificaciones.py                # Envío por correo (Gmail) y Telegram
 ├── config.py                        # Credenciales privadas (NO se comparte)
 ├── config.example.py                # Plantilla de credenciales (sí se comparte)
@@ -183,6 +184,41 @@ Esto genera el archivo **`dashboard.html`** y lo abre en el navegador. No levant
 servidor (no queda nada corriendo en segundo plano). Muestra **un equipo a la vez**, con
 dos menús desplegables para navegar: uno por **subestación** y otro por **equipo**. Para
 ver datos actualizados, vuelve a ejecutar `python dashboard.py`.
+
+### 📒 Enviar el histórico de un equipo a alguien puntual
+
+Si una persona pide, por ejemplo, *"mándame las últimas 3 visitas del ISL-32L44"*, se usa
+`enviar_historico.py`. Manda el histórico (todas las mediciones de las últimas N visitas)
+por correo y/o Telegram, **a quien indiques solo esa vez** (sin tocar `config.py`):
+
+```bash
+# Últimas 3 visitas a un correo puntual:
+python enviar_historico.py ISL-32L44 --n 3 --correo persona@ejemplo.com
+
+# A un chat de Telegram puntual:
+python enviar_historico.py CTE-32L11 --telegram 584397421
+
+# A varios destinatarios a la vez:
+python enviar_historico.py SIS-32L27 --correo a@x.com b@y.com --telegram 584397421
+
+# Sin --correo ni --telegram: usa los destinatarios de config.py
+python enviar_historico.py TEL-32L9
+
+# Solo VER el mensaje (no envía nada):
+python enviar_historico.py ISL-32L44 --demo
+```
+
+- `--n` controla cuántas visitas (las más recientes). Por defecto **3**.
+- El código tolera ceros/guiones (`cte-32l8` encuentra `CTE-32L08`).
+
+### 🌐 Enlace al dashboard en los mensajes
+
+Si pones una URL en `DASHBOARD_URL` (en `config.py`), el correo y Telegram incluyen un
+enlace **"Ver dashboard web"**. Si la dejas vacía (`""`), no aparece ningún enlace.
+
+> El `dashboard.html` es un archivo **local**. Una `file:///...` solo abre en **tu**
+> computadora. Para que el enlace sirva a otras personas habría que **publicarlo** en
+> internet (por ejemplo, GitHub Pages).
 
 ### 🔄 Revisión automática (cada 50 min)
 

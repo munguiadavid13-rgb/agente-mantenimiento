@@ -49,15 +49,18 @@ def _chat_ids_telegram():
     return _como_lista(config.TELEGRAM_CHAT_ID)      # compatibilidad hacia atras
 
 
-def enviar_correo(asunto, cuerpo, cuerpo_html=None, imagenes=None):
+def enviar_correo(asunto, cuerpo, cuerpo_html=None, imagenes=None, destinatarios=None):
     """
     Envia un correo usando la cuenta de Gmail definida en config.py.
-    cuerpo      -> version en texto plano (respaldo si el cliente no muestra HTML).
-    cuerpo_html -> version con tablas/colores; si se da, el cliente la prefiere.
-    imagenes    -> lista de (cid, bytes_png) que el HTML referencia como
-                   <img src="cid:..."> para mostrar los graficos incrustados.
+    cuerpo        -> version en texto plano (respaldo si el cliente no muestra HTML).
+    cuerpo_html   -> version con tablas/colores; si se da, el cliente la prefiere.
+    imagenes      -> lista de (cid, bytes_png) que el HTML referencia como
+                     <img src="cid:..."> para mostrar los graficos incrustados.
+    destinatarios -> lista de correos a quien enviar SOLO esta vez (ej. mandar
+                     el historico a una persona puntual). Si es None, usa los de
+                     config.py.
     """
-    destinatarios = _destinatarios_correo()
+    destinatarios = _como_lista(destinatarios) if destinatarios else _destinatarios_correo()
     msg = EmailMessage()
     msg["From"] = config.CORREO_REMITENTE
     msg["To"] = ", ".join(destinatarios)         # uno o varios destinatarios
@@ -80,10 +83,12 @@ def enviar_correo(asunto, cuerpo, cuerpo_html=None, imagenes=None):
     print("  -> Correo enviado a", ", ".join(destinatarios))
 
 
-def enviar_telegram(texto, parse_mode=None):
+def enviar_telegram(texto, parse_mode=None, chat_ids=None):
     """
     Envia un mensaje por Telegram usando el bot definido en config.py.
     parse_mode: None (texto plano) o "HTML" para usar negritas/cursivas/etc.
+    chat_ids  : lista de chat_id a quien enviar SOLO esta vez; si es None usa
+                los de config.py.
     Telegram rechaza mensajes de mas de 4096 caracteres, asi que recortamos
     en un salto de linea para no cortar una etiqueta HTML a la mitad.
     """
@@ -95,7 +100,7 @@ def enviar_telegram(texto, parse_mode=None):
         texto = texto[:corte] + "\n\n... (mensaje recortado, ver correo)"
 
     url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
-    chats = _chat_ids_telegram()
+    chats = _como_lista(chat_ids) if chat_ids else _chat_ids_telegram()
     enviados = 0
     for chat_id in chats:
         campos = {"chat_id": chat_id, "text": texto}
