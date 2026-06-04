@@ -28,6 +28,27 @@ def _contexto_ssl():
     return ctx
 
 
+def _como_lista(valor):
+    """Acepta un solo valor o una lista y SIEMPRE devuelve una lista."""
+    if isinstance(valor, (list, tuple)):
+        return list(valor)
+    return [valor]
+
+
+def _destinatarios_correo():
+    """Lista de correos destino (admite la forma nueva en lista o la vieja)."""
+    if hasattr(config, "CORREO_DESTINATARIOS"):
+        return _como_lista(config.CORREO_DESTINATARIOS)
+    return _como_lista(config.CORREO_DESTINATARIO)   # compatibilidad hacia atras
+
+
+def _chat_ids_telegram():
+    """Lista de chat_id de Telegram (admite la forma nueva o la vieja)."""
+    if hasattr(config, "TELEGRAM_CHAT_IDS"):
+        return _como_lista(config.TELEGRAM_CHAT_IDS)
+    return _como_lista(config.TELEGRAM_CHAT_ID)      # compatibilidad hacia atras
+
+
 def enviar_correo(asunto, cuerpo, cuerpo_html=None, imagenes=None):
     """
     Envia un correo usando la cuenta de Gmail definida en config.py.
@@ -36,9 +57,10 @@ def enviar_correo(asunto, cuerpo, cuerpo_html=None, imagenes=None):
     imagenes    -> lista de (cid, bytes_png) que el HTML referencia como
                    <img src="cid:..."> para mostrar los graficos incrustados.
     """
+    destinatarios = _destinatarios_correo()
     msg = EmailMessage()
     msg["From"] = config.CORREO_REMITENTE
-    msg["To"] = config.CORREO_DESTINATARIO
+    msg["To"] = ", ".join(destinatarios)         # uno o varios destinatarios
     msg["Subject"] = asunto
     msg.set_content(cuerpo)                      # texto plano (siempre va)
     if cuerpo_html:
@@ -55,7 +77,7 @@ def enviar_correo(asunto, cuerpo, cuerpo_html=None, imagenes=None):
         servidor.starttls(context=_contexto_ssl())                # cifra la conexion
         servidor.login(config.CORREO_REMITENTE, config.CORREO_APP_PASSWORD)
         servidor.send_message(msg)
-    print("  -> Correo enviado a", config.CORREO_DESTINATARIO)
+    print("  -> Correo enviado a", ", ".join(destinatarios))
 
 
 def enviar_telegram(texto, parse_mode=None):
@@ -73,16 +95,21 @@ def enviar_telegram(texto, parse_mode=None):
         texto = texto[:corte] + "\n\n... (mensaje recortado, ver correo)"
 
     url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
-    campos = {
-        "chat_id": config.TELEGRAM_CHAT_ID,
-        "text": texto,
-    }
-    if parse_mode:
-        campos["parse_mode"] = parse_mode
-    datos = urllib.parse.urlencode(campos).encode()
-    with urllib.request.urlopen(url, data=datos, context=_contexto_ssl()) as respuesta:
-        respuesta.read()
-    print("  -> Mensaje de Telegram enviado")
+    chats = _chat_ids_telegram()
+    enviados = 0
+    for chat_id in chats:
+        campos = {"chat_id": chat_id, "text": texto}
+        if parse_mode:
+            campos["parse_mode"] = parse_mode
+        datos = urllib.parse.urlencode(campos).encode()
+        try:
+            with urllib.request.urlopen(url, data=datos, context=_contexto_ssl()) as r:
+                r.read()
+            enviados += 1
+        except Exception as e:
+            # si un chat falla (ej. el usuario no le ha escrito al bot), seguimos
+            print(f"  -> Error enviando Telegram a {chat_id}:", e)
+    print(f"  -> Mensaje de Telegram enviado a {enviados}/{len(chats)} chat(s)")
 
 
 def notificar(asunto, cuerpo_correo, texto_telegram=None, parse_mode_telegram=None,
