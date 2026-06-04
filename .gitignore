@@ -7,3 +7,6 @@ __pycache__/
 
 # Dashboard generado (se crea con: python dashboard.py)
 dashboard.html
+
+# Archivos temporales de Excel (cuando el libro esta abierto)
+~$*
