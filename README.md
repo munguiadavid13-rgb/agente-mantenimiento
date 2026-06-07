@@ -299,12 +299,12 @@ criterio `maximo` en la hoja **Limites**.
 
 ```
  RESUMEN
-   Subestaciones : 3
-   Equipos       : 3
-   Visitas       : 10
-   Hallazgos     : 1  (requieren accion)
+   Subestaciones : 6
+   Equipos       : 20
+   Visitas       : 200
+   Hallazgos     : 6  (requieren accion)
 
- 1) HALLAZGOS QUE REQUIEREN ACCION
+ 1) HALLAZGOS QUE REQUIEREN ACCION   (1 de los 6)
    [!] ISL-32L44  (restaurador)
        Subestacion : Isletas
        Fecha       : 2026-06-02        Cuadrilla: TCO1
@@ -312,7 +312,8 @@ criterio `maximo` en la hoja **Limites**.
 
  3) HISTORICO Y TENDENCIA - Resistencia de tierra (Ohm)
    ISL-32L44 (restaurador) - Isletas
-        2025-11-12     2.6 Ohm   NORMAL
+        2026-02-02     3.7 Ohm   NORMAL
+        2026-02-15     3.9 Ohm   NORMAL
         2026-03-08     2.9 Ohm   NORMAL
         2026-06-02     5.5 Ohm   REVISAR  <-- REVISAR
         Tendencia: subiendo (2.9 -> 5.5)
@@ -331,7 +332,9 @@ Curso de Programación — Prof. PhD(c) Luis Loo
 ## 📝 Notas
 
 - Los datos incluidos en el Excel son **sintéticos** (de ejemplo) para demostrar el
-  funcionamiento; deben reemplazarse por las mediciones reales de campo.
+  funcionamiento; deben reemplazarse por las mediciones reales de campo. Actualmente cada
+  equipo tiene **10 visitas** (200 registros en total), con fechas entre abril 2025 y junio
+  2026, para alimentar el histórico y las tendencias.
 - No incluir en el repositorio datos confidenciales reales de la empresa ni credenciales
   de telecontrol.
 - El envío de notificaciones desactiva la verificación de certificado SSL porque la red
