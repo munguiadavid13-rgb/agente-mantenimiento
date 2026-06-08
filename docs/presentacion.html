@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agente Buchholz — Presentación</title>
+<style>
+  :root{
+    --azul:#0d6efd; --azul-osc:#0a58ca; --tinta:#212529; --gris:#6c757d;
+    --rojo:#dc3545; --rojo-bg:#f8d7da; --rojo-tx:#842029;
+    --verde:#198754; --verde-bg:#d1e7dd; --verde-tx:#0f5132;
+    --gris-bg:#e2e3e5; --gris-tx:#41464b; --ama-bg:#fff3cd; --ama-tx:#664d03;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:Arial, Helvetica, sans-serif; color:var(--tinta);
+    background:#0b1d3a; overflow:hidden;
+  }
+  /* barra de progreso */
+  #barra{ position:fixed; top:0; left:0; height:4px; background:var(--azul);
+          width:0; z-index:50; transition:width .25s ease; }
+  /* contenedor de diapositivas */
+  .slide{
+    position:absolute; inset:0; display:none; flex-direction:column;
+    justify-content:center; padding:6vh 8vw; background:#f1f3f5;
+    animation:fade .35s ease;
+  }
+  .slide.activa{ display:flex; }
+  @keyframes fade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+  h1{ font-size:clamp(28px,5vw,52px); line-height:1.1; margin-bottom:14px; }
+  h2{ font-size:clamp(22px,3.4vw,36px); color:var(--azul-osc); margin-bottom:18px;
+      border-bottom:3px solid var(--azul); padding-bottom:8px; display:inline-block; }
+  p,li{ font-size:clamp(15px,2vw,20px); line-height:1.55; }
+  ul{ margin:6px 0 0 22px; } li{ margin:7px 0; }
+  .sub{ color:var(--gris); font-size:clamp(15px,2vw,20px); }
+  b.k{ color:var(--azul-osc); }
+  .chip{ display:inline-block; background:#eef2ff; border:1px solid #dfe3ff;
+         color:#3b3f5c; border-radius:999px; padding:5px 12px; font-size:14px;
+         margin:4px 6px 0 0; }
+  .badge{ padding:3px 10px; border-radius:10px; font-size:13px; font-weight:bold; }
+  .b-rev{ background:var(--rojo-bg); color:var(--rojo-tx); }
+  .b-nor{ background:var(--verde-bg); color:var(--verde-tx); }
+  .b-mon{ background:var(--gris-bg); color:var(--gris-tx); }
+  .cols{ display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; }
+  .col{ flex:1; min-width:260px; }
+  .card{ background:#fff; border:1px solid #dee2e6; border-radius:12px;
+         padding:18px 20px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .card h3{ font-size:18px; margin-bottom:8px; }
+  .grid{ display:flex; gap:14px; flex-wrap:wrap; }
+  .stat{ flex:1; min-width:120px; background:#fff; border:1px solid #dee2e6;
+         border-radius:12px; padding:16px; text-align:center; }
+  .stat .n{ font-size:clamp(26px,4vw,40px); font-weight:bold; color:var(--azul); }
+  .stat .e{ font-size:13px; color:var(--gris); }
+  .btn{ display:inline-block; background:var(--azul); color:#fff; text-decoration:none;
+        padding:11px 20px; border-radius:8px; font-weight:bold; margin-top:14px; }
+  .btn:hover{ background:var(--azul-osc); }
+  .mono{ font-family:Consolas,Menlo,monospace; background:#0b1d3a; color:#e7eefc;
+         border-radius:10px; padding:16px 18px; font-size:clamp(13px,1.6vw,16px);
+         line-height:1.5; overflow:auto; }
+  .mono .c{ color:#7ea2e0; }     /* comentario */
+  .mono .t{ color:#ffd479; }     /* tipo/clase */
+  /* diagrama de composicion */
+  .comp{ display:flex; flex-direction:column; gap:0; }
+  .nivel{ border:2px solid var(--azul); border-radius:12px; padding:14px 16px;
+          background:#fff; position:relative; }
+  .nivel + .nivel{ margin-top:26px; }
+  .nivel::before{ content:"▼ contiene"; position:absolute; top:-23px; left:18px;
+          font-size:12px; color:var(--gris); }
+  .nivel b{ color:var(--azul-osc); font-size:18px; }
+  .nivel span{ color:var(--gris); font-size:14px; }
+
+  /* portada */
+  #s1{ background:linear-gradient(135deg,#0d6efd 0%,#0a58ca 60%,#0b1d3a 100%);
+       color:#fff; align-items:flex-start; }
+  #s1 h1{ color:#fff; } #s1 .sub{ color:#dbe7ff; }
+  .rayo{ font-size:clamp(46px,9vw,90px); }
+  .pill{ display:inline-block; border:1px solid rgba(255,255,255,.5);
+         border-radius:999px; padding:6px 14px; font-size:14px; margin-top:18px; }
+
+  /* navegacion */
+  #nav{ position:fixed; bottom:16px; right:20px; z-index:50; display:flex;
+        gap:10px; align-items:center; }
+  #nav button{ background:var(--azul); color:#fff; border:none; width:42px;
+        height:42px; border-radius:50%; font-size:18px; cursor:pointer; }
+  #nav button:hover{ background:var(--azul-osc); }
+  #cont{ position:fixed; bottom:24px; left:20px; z-index:50; color:var(--gris);
+         font-size:14px; }
+  #s1 ~ #cont{ }
+  .hint{ position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+         color:var(--gris); font-size:12px; z-index:40; }
+</style>
+</head>
+<body>
+<div id="barra"></div>
+
+<!-- 1 PORTADA -->
+<section class="slide" id="s1">
+  <div class="rayo">⚡</div>
+  <h1>Agente Buchholz</h1>
+  <p class="sub" style="font-size:clamp(18px,2.6vw,26px);">
+     Mantenimiento <b style="color:#fff;">predictivo</b> de subestaciones eléctricas</p>
+  <p class="sub" style="margin-top:10px;max-width:760px;">
+     Un agente que lee las mediciones de las visitas de mantenimiento, las
+     clasifica, sigue su tendencia en el tiempo y avisa de fallas incipientes.</p>
+  <span class="pill">🛡️ Homenaje al relé Buchholz — aviso temprano de fallas en transformadores</span>
+  <p class="pill" style="border:none;padding-left:0;margin-top:26px;">
+     Jose David Pérez Munguía · Maestría en Automatización Industrial · UTH 2026.4</p>
+</section>
+
+<!-- 2 EL PROBLEMA -->
+<section class="slide" id="s2">
+  <h2>El problema</h2>
+  <div class="cols">
+    <div class="col">
+      <p>El mantenimiento de <b class="k">interruptores y restauradores</b> genera muchas
+         mediciones en cada visita, pero:</p>
+      <ul>
+        <li>Los datos quedan <b>dispersos</b> en hojas sueltas por visita.</li>
+        <li>Cuesta ver la <b>tendencia</b> de un equipo a lo largo del tiempo.</li>
+        <li>Las fallas incipientes (tierra que sube, batería que baja…) se detectan
+            <b>tarde</b>.</li>
+        <li>No hay un <b>aviso automático</b> cuando algo se sale de norma.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h3>La idea clave</h3>
+        <p>El <b class="k">histórico</b> de cada parámetro (tierra, voltajes, corrientes…)
+           <b>es el corazón predictivo</b>: comparar cómo evoluciona permite anticipar el
+           problema antes de la falla.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 LA SOLUCION -->
+<section class="slide" id="s3">
+  <h2>La solución: ¿qué hace?</h2>
+  <div class="grid" style="margin-bottom:20px;">
+    <div class="stat"><div class="n">1</div><div class="e">Lee el Excel de visitas</div></div>
+    <div class="stat"><div class="n">2</div><div class="e">Clasifica cada medición</div></div>
+    <div class="stat"><div class="n">3</div><div class="e">Sigue el histórico/tendencia</div></div>
+    <div class="stat"><div class="n">4</div><div class="e">Notifica por 3 canales</div></div>
+  </div>
+  <p>Cada medición se etiqueta como
+     <span class="badge b-nor">NORMAL</span>
+     <span class="badge b-rev">REVISAR</span>
+     <span class="badge b-mon">MONITOREO</span>
+     según su criterio.</p>
+  <p style="margin-top:14px;">El <b class="k">razonamiento</b> lo hace la sesión de Claude Code; las
+     <b class="k">tools en Python</b> hacen lo determinista (leer, clasificar, graficar,
+     enviar). Sin costo por token de una API externa.</p>
+</section>
+
+<!-- 4 ARQUITECTURA POO -->
+<section class="slide" id="s4">
+  <h2>Arquitectura: 4 clases en composición</h2>
+  <div class="cols">
+    <div class="col" style="max-width:430px;">
+      <div class="comp">
+        <div class="nivel"><b>Subestación</b> &nbsp;<span>Ceiba Térmica, San Isidro, …</span></div>
+        <div class="nivel"><b>Equipo</b> &nbsp;<span>interruptor / restaurador + ficha técnica</span></div>
+        <div class="nivel"><b>Visita</b> &nbsp;<span>fecha · cuadrilla · observación</span></div>
+        <div class="nivel"><b>Medición</b> &nbsp;<span>parámetro · valor · clasificar()</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h3>Diseño elegante</h3>
+        <ul>
+          <li>El <b>estado no se guarda</b>: se calcula al vuelo comparando el valor
+              contra su límite.</li>
+          <li>Si cambian los límites, se <b>reevalúa todo</b> el histórico.</li>
+          <li><span class="mono" style="display:inline;padding:2px 8px;">Equipo.historico(p)</span>
+              y <span class="mono" style="display:inline;padding:2px 8px;">Equipo.tendencia(p)</span>
+              dan la base predictiva.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 LOGICA DE CLASIFICACION -->
+<section class="slide" id="s5">
+  <h2>Lógica de clasificación</h2>
+  <div class="cols">
+    <div class="col">
+      <div class="card" style="border-left:6px solid var(--rojo);">
+        <h3>Grupo A — con límite → se clasifica</h3>
+        <ul>
+          <li>Voltaje <b>VDC</b> &nbsp;<span class="badge b-rev">REVISAR</span> si ≤ 20 V</li>
+          <li>Voltaje <b>AC</b> &nbsp;<span class="badge b-rev">REVISAR</span> si ≤ 119 V</li>
+          <li>Resistencia de <b>tierra</b> &nbsp;<span class="badge b-rev">REVISAR</span> si ≥ 5 Ω</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="border-left:6px solid var(--gris);">
+        <h3>Grupo B — sin límite → solo histórico</h3>
+        <ul>
+          <li>Corriente Fase A/B/C, Potencia activa/reactiva</li>
+          <li>Corriente de fuga, Nº de operaciones</li>
+          <li>Se marcan <span class="badge b-mon">MONITOREO</span> y alimentan la tendencia</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:18px;"><b class="k">Regla:</b> si el parámetro está en la tabla de
+     <i>Límites</i> → se clasifica; si no → es solo monitoreo. Se cambia el comportamiento
+     <b>editando la tabla, sin tocar código</b>.</p>
+</section>
+
+<!-- 6 BASE DE DATOS -->
+<section class="slide" id="s6">
+  <h2>La base de datos (Excel)</h2>
+  <div class="cols">
+    <div class="col">
+      <p>Un libro con:</p>
+      <ul>
+        <li>Hoja índice <b>Equipos</b> (subestación, código, tipo)</li>
+        <li><b>Una hoja por equipo</b>: ficha técnica + tabla de visitas</li>
+        <li>Hoja <b>Límites</b> (los criterios del Grupo A)</li>
+      </ul>
+      <p style="margin-top:12px;" class="sub">Agregar un equipo = fila en <i>Equipos</i> + su
+         hoja (lo hace <span class="mono" style="display:inline;padding:2px 8px;">agregar_equipo.py</span>).</p>
+    </div>
+    <div class="col">
+      <div class="grid">
+        <div class="stat"><div class="n">6</div><div class="e">Subestaciones</div></div>
+        <div class="stat"><div class="n">20</div><div class="e">Equipos</div></div>
+        <div class="stat"><div class="n">3</div><div class="e">Parámetros con límite</div></div>
+      </div>
+      <p style="margin-top:14px;"><span class="chip">Ceiba Térmica</span><span class="chip">San Isidro</span>
+         <span class="chip">Isletas</span><span class="chip">Coyoles Central</span>
+         <span class="chip">Bonito Oriental</span><span class="chip">Tela</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 CANALES -->
+<section class="slide" id="s7">
+  <h2>Tres canales de salida + automatización</h2>
+  <div class="cols">
+    <div class="col"><div class="card">
+      <h3>📧 Correo (HTML)</h3>
+      <p>Una sola notificación con las alertas <b>enumeradas</b> (1, 2, 3…), con motivo,
+         última visita y enlace al dashboard.</p>
+    </div></div>
+    <div class="col"><div class="card">
+      <h3>💬 Telegram</h3>
+      <p>Mensaje con emojis, <b>tendencia</b> (📈/📉) y la lista numerada. Varios destinatarios.</p>
+    </div></div>
+    <div class="col"><div class="card">
+      <h3>🌐 Dashboard web</h3>
+      <p>Tablero público: un equipo a la vez, ficha + 3 gráficos de histórico.</p>
+    </div></div>
+  </div>
+  <p style="margin-top:18px;"><b class="k">Automatización:</b> una tarea de Windows revisa cada
+     <b>50 min</b> y refresca el dashboard; <b>solo notifica cuando algo cambia</b> (no satura).</p>
+  <!-- Para tu defensa: aquí puedes pegar capturas reales del correo y de Telegram.
+       Reemplaza este comentario por: <img src="captura_correo.png" style="max-width:100%;border-radius:8px;"> -->
+</section>
+
+<!-- 8 ESTADO ACTUAL / VALOR -->
+<section class="slide" id="s8">
+  <h2>Estado actual y valor</h2>
+  <div class="cols">
+    <div class="col">
+      <p><b class="k">6 alertas</b> detectadas hoy, con su tendencia:</p>
+      <ul>
+        <li>Tierra ≥ 5 Ω &nbsp;<span class="badge b-rev">REVISAR</span> — CTE-32L11, ISL-32L44, BOR-32L51 📈</li>
+        <li>Voltaje DC ≤ 20 V &nbsp;<span class="badge b-rev">REVISAR</span> — SIS-32L27, CCE-32L40 📉</li>
+        <li>Voltaje AC ≤ 119 V &nbsp;<span class="badge b-rev">REVISAR</span> — TEL-32L9 📉</li>
+      </ul>
+      <p style="margin-top:14px;"><b>Detección temprana</b> → menos fallas, mejor planificación
+         de cuadrillas y repuestos.</p>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h3>Ver en vivo</h3>
+        <p>Dashboard público con los 20 equipos y sus gráficos:</p>
+        <a class="btn" href="https://munguiadavid13-rgb.github.io/agente-mantenimiento/" target="_blank">🌐 Abrir dashboard</a>
+        <p style="margin-top:14px;" class="sub">Código:<br>
+           <span class="mono" style="display:inline;padding:2px 8px;">github.com/munguiadavid13-rgb/agente-mantenimiento</span></p>
+      </div>
+      <p style="margin-top:16px;font-size:clamp(18px,2.4vw,24px);">⚡ <b>Gracias.</b></p>
+    </div>
+  </div>
+</section>
+
+<div id="cont"></div>
+<div id="nav">
+  <button id="prev" title="Anterior (←)">◀</button>
+  <button id="next" title="Siguiente (→)">▶</button>
+</div>
+<div class="hint">Usa ← →  (o la barra espaciadora) para navegar</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const barra = document.getElementById('barra');
+  const cont = document.getElementById('cont');
+  function mostrar(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('activa', k === i));
+    barra.style.width = ((i + 1) / slides.length * 100) + '%';
+    cont.textContent = (i + 1) + ' / ' + slides.length;
+  }
+  function next(){ mostrar(i + 1); }
+  function prev(){ mostrar(i - 1); }
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') mostrar(0);
+    if (e.key === 'End')  mostrar(slides.length - 1);
+  });
+  // swipe basico en movil
+  let x0 = null;
+  document.addEventListener('touchstart', e => x0 = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 50) (dx < 0 ? next() : prev());
+    x0 = null;
+  });
+  mostrar(0);
+</script>
+</body>
+</html>

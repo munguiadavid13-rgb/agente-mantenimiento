@@ -14,3 +14,6 @@ estado_alertas.json
 
 # Archivos temporales de Excel (cuando el libro esta abierto)
 ~$*
+
+# Historial de R (basura local)
+.Rhistory
