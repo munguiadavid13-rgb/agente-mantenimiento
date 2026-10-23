@@ -409,92 +409,64 @@ def _celda(contenido, extra=""):
     return f'<td style="padding:6px 10px;border:1px solid #dee2e6;{extra}">{contenido}</td>'
 
 
+def _flecha_tendencia(texto):
+    """'subiendo (...)' -> flecha corta para el correo."""
+    if texto.startswith("subiendo"):
+        return "&#9650; sube"
+    if texto.startswith("bajando"):
+        return "&#9660; baja"
+    if texto.startswith("estable"):
+        return "&#9654; estable"
+    return "&mdash;"
+
+
 def reporte_html(subestaciones, hoy, hallazgos=None):
     """
-    Genera el correo HTML ENFOCADO en los equipos que tienen alerta.
-    No incluye los equipos que estan bien: solo el/los equipo(s) en alerta
-    con su motivo y los datos de su ultima visita.
-
-    Los graficos NO van en el correo (para mantenerlo ligero); el historico
-    grafico se consulta en el dashboard web. Devuelve solo el HTML.
+    Correo HTML RESUMIDO: una fila por alerta (equipo, parametro, medido vs
+    limite, tendencia) y un boton al dashboard, donde esta el detalle y el
+    historico. No repite las mediciones que estan bien.
 
     Si se pasa 'hallazgos' (lista de (equipo, visita, medicion)) el correo se
-    limita a esos equipos; si no, usa todos. Asi cada equipo en alerta puede
-    ir en su propio correo.
+    limita a esos; si no, usa todos.
     """
     if hallazgos is None:
         hallazgos = todos_los_hallazgos(subestaciones)
-
-    # equipos unicos con alerta, conservando el orden de aparicion
-    equipos_alerta = []
-    for e, v, m in hallazgos:
-        if e not in equipos_alerta:
-            equipos_alerta.append(e)
+    n_equipos = len({e.codigo for e, _, _ in hallazgos})
 
     H = []
     H.append('<div style="font-family:Arial,Helvetica,sans-serif;color:#212529;'
-             'max-width:760px;margin:auto;">')
-
-    # ---- encabezado (rojo: es una alerta) ----
-    H.append('<div style="background:#dc3545;color:#fff;padding:16px 20px;'
-             'border-radius:8px 8px 0 0;">')
-    H.append('<h2 style="margin:0;">&#9888;&#65039; Agente Buchholz &mdash; Alerta de Mantenimiento</h2>')
-    H.append(f'<p style="margin:4px 0 0;opacity:.9;">Reporte generado: {hoy} '
-             f'&middot; {len(equipos_alerta)} equipo(s) en alerta</p>')
-    H.append('</div>')
-    H.append('<div style="border:1px solid #dee2e6;border-top:none;padding:20px;'
+             'max-width:680px;margin:auto;">')
+    H.append('<div style="background:#dc3545;color:#fff;padding:14px 18px;'
+             'border-radius:8px 8px 0 0;">'
+             '<h2 style="margin:0;font-size:18px;">&#9888;&#65039; Agente Buchholz '
+             '&mdash; Alertas de mantenimiento</h2>'
+             f'<p style="margin:4px 0 0;opacity:.9;font-size:13px;">{hoy} &middot; '
+             f'{len(hallazgos)} alerta(s) en {n_equipos} equipo(s)</p></div>')
+    H.append('<div style="border:1px solid #dee2e6;border-top:none;padding:16px;'
              'border-radius:0 0 8px 8px;">')
 
-    # ---- una seccion NUMERADA por equipo en alerta ----
-    for i, e in enumerate(equipos_alerta, 1):
-        suyos = [(vv, mm) for (ee, vv, mm) in hallazgos if ee is e]
-
-        H.append('<h3 style="border-bottom:2px solid #dc3545;padding-bottom:4px;">'
-                 f'<span style="color:#dc3545;">{i}.</span> &#128295; {_esc(e.codigo)} '
-                 '<span style="font-weight:normal;color:#6c757d;font-size:15px;">'
-                 f'({_esc(e.tipo)}) &mdash; {_esc(e.subestacion)}</span></h3>')
-
-        # motivo de la alerta
-        H.append('<div style="background:#f8d7da;color:#842029;padding:10px 14px;'
-                 'border-radius:6px;margin-bottom:14px;">')
-        H.append('<b>Motivo de la alerta:</b>'
-                 '<ul style="margin:6px 0 0;padding-left:20px;">')
-        for vv, mm in suyos:
-            criterio = "max" if mm.criterio == "maximo" else "min"
-            H.append(f'<li>{_esc(mm.parametro)}: <b>{mm.valor} {_esc(mm.unidad)}</b> '
-                     f'(limite {criterio} {mm.limite}) &middot; '
-                     f'visita {str(vv.fecha)[:10]}</li>')
-        H.append('</ul></div>')
-
-        # ultima visita completa
-        v = e.ultima_visita()
-        if v is not None:
-            H.append(f'<p style="margin:0 0 4px;"><b>Ultima visita:</b> '
-                     f'{str(v.fecha)[:10]} &middot; Cuadrilla {_esc(v.cuadrilla)}</p>')
-            H.append('<table style="border-collapse:collapse;width:100%;'
-                     'font-size:14px;margin-bottom:16px;">')
-            for columna, parametro, unidad in COLUMNAS:
-                m = v.medicion(parametro)
-                if m is None:
-                    continue
-                valor = "(sin dato)" if m.valor is None else f"{m.valor} {m.unidad}"
-                H.append('<tr>')
-                H.append(_celda(_esc(parametro), "width:45%;"))
-                H.append(_celda(valor))
-                H.append(_celda(_badge(m.clasificar()), "text-align:center;width:120px;"))
-                H.append('</tr>')
-            H.append('</table>')
-            if v.observacion:
-                H.append('<p style="font-size:12px;color:#6c757d;margin:0 0 12px;">'
-                         f'&#128221; {_esc(v.observacion)}</p>')
-
-        H.append('<p style="font-size:12px;color:#6c757d;">Los graficos del historico '
-                 '(corrientes, potencias y tierra) se consultan en el dashboard web.</p>')
-        H.append('<hr style="border:none;border-top:1px solid #dee2e6;margin:24px 0;">')
+    H.append('<table style="border-collapse:collapse;width:100%;font-size:13px;">'
+             '<tr style="background:#f8f9fa;color:#6c757d;font-size:11px;text-align:left;">'
+             + "".join(f'<th style="padding:6px 8px;border-bottom:1px solid #dee2e6;">{c}</th>'
+                       for c in ["#", "Equipo", "Parametro", "Medido", "Limite", "Tend."])
+             + '</tr>')
+    for i, (e, v, m) in enumerate(hallazgos, 1):
+        criterio = "max" if m.criterio == "maximo" else "min"
+        celda = 'padding:7px 8px;border-bottom:1px solid #eef0f2;'
+        H.append('<tr>'
+                 f'<td style="{celda}color:#6c757d;">{i}</td>'
+                 f'<td style="{celda}"><b>{_esc(e.codigo)}</b><br>'
+                 f'<span style="color:#6c757d;font-size:12px;">{_esc(e.subestacion)}</span></td>'
+                 f'<td style="{celda}">{_esc(m.parametro)}</td>'
+                 f'<td style="{celda}color:#842029;"><b>{m.valor} {_esc(m.unidad)}</b></td>'
+                 f'<td style="{celda}color:#6c757d;">{criterio} {m.limite}</td>'
+                 f'<td style="{celda}">{_flecha_tendencia(e.tendencia(m.parametro))}</td>'
+                 '</tr>')
+    H.append('</table>')
 
     H.append(_boton_html_dashboard())
-    H.append('<p style="font-size:12px;color:#adb5bd;margin-top:8px;">'
-             'Generado automaticamente por el Agente Buchholz (mantenimiento predictivo) '
+    H.append('<p style="font-size:11px;color:#adb5bd;margin:8px 0 0;text-align:center;">'
+             'Detalle, historial y graficos en el dashboard &middot; Agente Buchholz '
              '&middot; Jose David Perez Munguia &mdash; UTH 2026.4</p>')
     H.append('</div></div>')
     return "\n".join(H)
